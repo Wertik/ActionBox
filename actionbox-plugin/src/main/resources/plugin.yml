@@ -1,0 +1,8 @@
+name: ActionBox
+main: ${project.groupId}.ActionBoxPlugin
+version: ${project.version}
+authors: [ Wertik1206 ]
+commands:
+  actionbox:
+    description: Main plugin command.
+    aliases: [ ab, box ]

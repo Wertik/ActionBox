@@ -1,0 +1,23 @@
+# Trigger Configuration for ${project.name}
+#
+# Version: ${project.version}
+
+# Trigger name.
+trigger-one:
+
+  # When to execute.
+  action: block-break
+
+  # If requirements are met, execute, placeholders are filled based on action.
+  # This is basically another level to box conditions.
+  requirements:
+    - '%block%=DIAMOND_ORE'
+    - '%tool%=IRON_PICKAXE'
+
+  # You can also fire commands here directly, rules and options from boxes apply.
+  commands:
+    - '{%player_health%>5}&7You mined a block with more than &35 &7hp!'
+
+  # What boxes to execute here and/or how many times.
+  execute:
+    - 'box-one'

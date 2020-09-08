@@ -1,0 +1,19 @@
+# Box Configuration for ${project.name}
+#
+# Version: ${project.version}
+
+# %player% placeholder is only parsed, when the box is executed against a player.
+
+box-one:
+
+  # The whole box is only executed when the condition is met.
+  condition: '%player_health%>2'
+
+  commands:
+    - 'say Hello world!'
+
+  broadcast:
+    - '&7%player% broken a block!'
+
+  inform:
+    - '{%player_health%>5}&7Hello {%player_health%<8:&aslightly} &7injured player!'
