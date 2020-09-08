@@ -2,17 +2,15 @@ package space.devport.wertik.actionbox.system.trigger.struct;
 
 import lombok.Getter;
 import org.bukkit.event.Event;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import space.devport.wertik.actionbox.ActionBoxPlugin;
 import space.devport.wertik.actionbox.system.trigger.TriggerManager;
 
-public abstract class TriggerListener<T extends Event> implements Listener {
+public abstract class TriggerProcessor<T extends Event> {
 
     @Getter
     private final String name;
 
-    public TriggerListener(String name) {
+    public TriggerProcessor(String name) {
         this.name = name;
     }
 
@@ -28,7 +26,6 @@ public abstract class TriggerListener<T extends Event> implements Listener {
      */
     public abstract TriggerContext parseVariables(T event);
 
-    @EventHandler
     public void onAction(T event) {
         if (shouldFire(event))
             fire(event);
@@ -39,6 +36,6 @@ public abstract class TriggerListener<T extends Event> implements Listener {
     }
 
     public void register() {
-        ActionBoxPlugin.getInstance().getManager(TriggerManager.class).registerListener(this);
+        ActionBoxPlugin.getInstance().getManager(TriggerManager.class).registerProcessor(this);
     }
 }

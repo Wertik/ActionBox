@@ -10,7 +10,7 @@ import space.devport.wertik.actionbox.system.box.BoxManager;
 import space.devport.wertik.actionbox.system.box.struct.Box;
 import space.devport.wertik.actionbox.system.trigger.struct.Trigger;
 import space.devport.wertik.actionbox.system.trigger.struct.TriggerContext;
-import space.devport.wertik.actionbox.system.trigger.struct.TriggerListener;
+import space.devport.wertik.actionbox.system.trigger.struct.TriggerProcessor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,9 +18,11 @@ import java.util.Map;
 
 public class TriggerManager extends Manager {
 
-    private final Map<String, TriggerListener<? extends Event>> registeredListeners = new HashMap<>();
+    private final Map<String, TriggerProcessor<? extends Event>> registeredProcessors = new HashMap<>();
 
     private final Map<String, Trigger> loadedTriggers = new HashMap<>();
+
+    private TriggerListener triggerListener;
 
     private final Configuration configuration;
 
@@ -31,7 +33,11 @@ public class TriggerManager extends Manager {
 
     @Override
     public void enable() {
-        new TriggerListener<BlockBreakEvent>("block-break") {
+
+        triggerListener = new TriggerListener(this);
+        plugin.registerListener(triggerListener);
+
+        new TriggerProcessor<BlockBreakEvent>("block-break") {
             @Override
             public TriggerContext parseVariables(BlockBreakEvent event) {
                 return new TriggerContext()
@@ -42,7 +48,7 @@ public class TriggerManager extends Manager {
         }.register();
         //TODO more...
 
-        consoleOutput.info("Registered " + this.registeredListeners.size() + " listener(s)...");
+        consoleOutput.info("Registered " + this.registeredProcessors.size() + " listener(s)...");
 
         load();
     }
@@ -54,7 +60,7 @@ public class TriggerManager extends Manager {
 
     @Override
     public void disable() {
-        registeredListeners.values().forEach(HandlerList::unregisterAll);
+        HandlerList.unregisterAll(this.triggerListener);
     }
 
     private void load() {
@@ -94,12 +100,23 @@ public class TriggerManager extends Manager {
     }
 
     public boolean isRegistered(String name) {
-        return this.registeredListeners.containsKey(name);
+        return this.registeredProcessors.containsKey(name);
     }
 
-    public void registerListener(TriggerListener<? extends Event> triggerListener) {
-        plugin.registerListener(triggerListener);
-        this.registeredListeners.put(triggerListener.getName(), triggerListener);
+    public void registerProcessor(TriggerProcessor<? extends Event> triggerProcessor) {
+        this.registeredProcessors.put(triggerProcessor.getName(), triggerProcessor);
+    }
+
+    public <T extends Event> void process(String name, T event) {
+        TriggerProcessor<? extends Event> triggerProcessor = this.registeredProcessors.get(name);
+
+        if (!triggerProcessor.getClass().getComponentType().equals(event.getClass())) {
+            consoleOutput.err("Processor uses an unexpected Event class.");
+            return;
+        }
+
+        TriggerProcessor<T> processor = (TriggerProcessor<T>) triggerProcessor;
+        processor.onAction(event);
     }
 
     public void fire(String name, TriggerContext context) {
