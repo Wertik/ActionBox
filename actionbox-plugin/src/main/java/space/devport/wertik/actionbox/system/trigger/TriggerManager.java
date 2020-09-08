@@ -42,6 +42,8 @@ public class TriggerManager extends Manager {
         }.register();
         //TODO more...
 
+        consoleOutput.info("Registered " + this.registeredListeners.size() + " listener(s)...");
+
         load();
     }
 

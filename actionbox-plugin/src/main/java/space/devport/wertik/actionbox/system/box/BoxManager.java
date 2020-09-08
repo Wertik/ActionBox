@@ -28,7 +28,7 @@ public class BoxManager extends Manager {
 
     @Override
     public void reload() {
-
+        load();
     }
 
     @Override
@@ -50,6 +50,8 @@ public class BoxManager extends Manager {
             Box box = new Box(name);
 
             box.setCommands(configuration.getStringList(name + ".commands", new ArrayList<>()));
+
+            this.loadedBoxes.put(name, box);
             consoleOutput.debug("Loaded box " + name);
         }
         consoleOutput.info("Loaded " + this.loadedBoxes.size() + " box(es)...");
