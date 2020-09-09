@@ -2,7 +2,6 @@ package space.devport.wertik.actionbox.system.trigger;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.block.BlockBreakEvent;
 import space.devport.utils.configuration.Configuration;
 import space.devport.wertik.actionbox.ActionBoxPlugin;
 import space.devport.wertik.actionbox.Manager;
@@ -10,7 +9,8 @@ import space.devport.wertik.actionbox.system.box.BoxManager;
 import space.devport.wertik.actionbox.system.box.struct.Box;
 import space.devport.wertik.actionbox.system.trigger.struct.Trigger;
 import space.devport.wertik.actionbox.system.trigger.struct.TriggerContext;
-import space.devport.wertik.actionbox.system.trigger.struct.TriggerProcessor;
+import space.devport.wertik.actionbox.system.trigger.struct.TriggerExecutor;
+import space.devport.wertik.actionbox.system.trigger.struct.impl.BlockBreakExecutor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,11 +18,9 @@ import java.util.Map;
 
 public class TriggerManager extends Manager {
 
-    private final Map<String, TriggerProcessor<? extends Event>> registeredProcessors = new HashMap<>();
+    private final Map<String, TriggerExecutor<? extends Event>> registeredExecutors = new HashMap<>();
 
     private final Map<String, Trigger> loadedTriggers = new HashMap<>();
-
-    private TriggerListener triggerListener;
 
     private final Configuration configuration;
 
@@ -34,21 +32,9 @@ public class TriggerManager extends Manager {
     @Override
     public void enable() {
 
-        triggerListener = new TriggerListener(this);
-        plugin.registerListener(triggerListener);
+        new BlockBreakExecutor("block-break").register();
 
-        new TriggerProcessor<BlockBreakEvent>("block-break") {
-            @Override
-            public TriggerContext parseVariables(BlockBreakEvent event) {
-                return new TriggerContext()
-                        .fromBlock(event.getBlock())
-                        .fromPlayer(event.getPlayer())
-                        .fromItem(event.getPlayer().getInventory().getItemInMainHand(), "tool");
-            }
-        }.register();
-        //TODO more...
-
-        consoleOutput.info("Registered " + this.registeredProcessors.size() + " listener(s)...");
+        consoleOutput.info("Registered " + this.registeredExecutors.size() + " executor(s)...");
 
         load();
     }
@@ -60,7 +46,9 @@ public class TriggerManager extends Manager {
 
     @Override
     public void disable() {
-        HandlerList.unregisterAll(this.triggerListener);
+        for (TriggerExecutor<? extends Event> executor : this.registeredExecutors.values()) {
+            HandlerList.unregisterAll(executor);
+        }
     }
 
     private void load() {
@@ -100,23 +88,11 @@ public class TriggerManager extends Manager {
     }
 
     public boolean isRegistered(String name) {
-        return this.registeredProcessors.containsKey(name);
+        return this.registeredExecutors.containsKey(name);
     }
 
-    public void registerProcessor(TriggerProcessor<? extends Event> triggerProcessor) {
-        this.registeredProcessors.put(triggerProcessor.getName(), triggerProcessor);
-    }
-
-    public <T extends Event> void process(String name, T event) {
-        TriggerProcessor<? extends Event> triggerProcessor = this.registeredProcessors.get(name);
-
-        if (!triggerProcessor.getClass().getComponentType().equals(event.getClass())) {
-            consoleOutput.err("Processor uses an unexpected Event class.");
-            return;
-        }
-
-        TriggerProcessor<T> processor = (TriggerProcessor<T>) triggerProcessor;
-        processor.onAction(event);
+    public void registerProcessor(TriggerExecutor<? extends Event> triggerExecutor) {
+        this.registeredExecutors.put(triggerExecutor.getName(), triggerExecutor);
     }
 
     public void fire(String name, TriggerContext context) {

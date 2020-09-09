@@ -7,10 +7,16 @@ import space.devport.utils.text.Placeholders;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class TriggerContext extends Placeholders {
 
     private Player player;
+
+    public TriggerContext from(Consumer<TriggerContext> context) {
+        context.accept(this);
+        return this;
+    }
 
     public TriggerContext fromBlock(Block block) {
         add("block", block.getType().toString(), "type");
@@ -28,7 +34,7 @@ public class TriggerContext extends Placeholders {
         return this;
     }
 
-    private TriggerContext add(String name, Object value, String... modifiers) {
+    public TriggerContext add(String name, Object value, String... modifiers) {
         add("%" + name + (modifiers.length > 0 ? "_" + String.join("_", Arrays.asList(modifiers)) : "") + "%", value);
         return this;
     }

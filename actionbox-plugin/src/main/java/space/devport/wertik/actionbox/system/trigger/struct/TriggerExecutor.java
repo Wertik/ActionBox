@@ -2,16 +2,35 @@ package space.devport.wertik.actionbox.system.trigger.struct;
 
 import lombok.Getter;
 import org.bukkit.event.Event;
+import org.bukkit.event.Listener;
 import space.devport.wertik.actionbox.ActionBoxPlugin;
 import space.devport.wertik.actionbox.system.trigger.TriggerManager;
 
-public abstract class TriggerProcessor<T extends Event> {
+public abstract class TriggerExecutor<T extends Event> implements Listener {
 
     @Getter
     private final String name;
 
-    public TriggerProcessor(String name) {
+    protected final TriggerManager triggerManager;
+
+    public TriggerExecutor(String name) {
         this.name = name;
+        this.triggerManager = ActionBoxPlugin.getInstance().getManager(TriggerManager.class);
+    }
+
+    /**
+     * Parse TriggerContext from event.
+     */
+    public abstract TriggerContext parseVariables(T event);
+
+    public abstract void onEvent(T event);
+
+    /**
+     * Trigger the Executor, checks if it should fire.
+     */
+    public void trigger(T event) {
+        if (shouldFire(event))
+            fire(event);
     }
 
     /**
@@ -22,15 +41,8 @@ public abstract class TriggerProcessor<T extends Event> {
     }
 
     /**
-     * Parse TriggerContext from event.
+     * Fires the event directly without any checks.
      */
-    public abstract TriggerContext parseVariables(T event);
-
-    public void onAction(T event) {
-        if (shouldFire(event))
-            fire(event);
-    }
-
     private void fire(T event) {
         ActionBoxPlugin.getInstance().getManager(TriggerManager.class).fire(this.name, parseVariables(event));
     }
